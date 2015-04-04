@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# a small script to show lvmcache statistics
+# license - BSD
+# usage:
+#   lvmcache-stats vg0/lv_data
+
+FIELDS=$(cat <<EOF
+start
+end
+segment_type
+md_block_size
+md_utilization
+cache_block_size
+cache_utilization
+read_hits
+read_misses
+write_hits
+write_misses
+demotions
+promotions
+dirty
+features
+EOF
+)
+
+CACHE_ID=`echo "$1" | tr / -`
+column -t <(paste <(echo "$FIELDS") <(dmsetup status | grep "${CACHE_ID}:" | sed -r -e 's/.*: (.*)/\1/' | tr ' ' '\n' | head -n15))
