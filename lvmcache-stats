@@ -5,6 +5,11 @@
 # usage:
 #   lvmcache-stats vg0/lv_data
 
+# use strict mode
+set -o errexit
+set -o pipefail
+set -o nounset
+
 FIELDS=$(cat <<EOF
 start
 end
@@ -23,6 +28,36 @@ dirty
 features
 EOF
 )
+FIELD_COUNT=$(echo "$FIELDS" | wc -l)
+
+function extract_stat()
+{
+    echo "$1" | awk "/$2/ { print \$2 }"
+}
+
+function percent()
+{
+    awk "BEGIN { printf \"%.2f%\", 100*$1/$2 }"
+}
+
+function insert_after()
+{
+    awk "// { print } ; /$1/ { print \"\n$2 $3\" }"
+}
 
 CACHE_ID=`echo "$1" | tr / -`
-column -t <(paste <(echo "$FIELDS") <(dmsetup status | grep "${CACHE_ID}:" | sed -r -e 's/.*: (.*)/\1/' | tr ' ' '\n' | head -n15))
+CACHE_STATS=$(paste <(echo "$FIELDS") <(dmsetup status | grep "${CACHE_ID}:" | sed -r -e 's/.*: (.*)/\1/' | tr ' ' '\n' | head -n${FIELD_COUNT}))
+
+# calculate cache hit percentage
+READ_HITS=$(extract_stat "$CACHE_STATS" read_hits)
+READ_MISSES=$(extract_stat "$CACHE_STATS" read_misses)
+READ_HIT_RATIO=$(percent $READ_HITS $READ_MISSES)
+
+WRITE_HITS=$(extract_stat "$CACHE_STATS" write_hits)
+WRITE_MISSES=$(extract_stat "$CACHE_STATS" write_misses)
+WRITE_HIT_RATIO=$(percent $WRITE_HITS $WRITE_MISSES)
+
+echo "$CACHE_STATS" | \
+    insert_after read_misses read_hit_ratio "$READ_HIT_RATIO" | \
+    insert_after write_misses write_hit_ratio "$WRITE_HIT_RATIO" | \
+    column -t
