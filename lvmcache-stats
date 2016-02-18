@@ -51,11 +51,11 @@ CACHE_STATS=$(paste <(echo "$FIELDS") <(dmsetup status | grep "${CACHE_ID}:" | s
 # calculate cache hit percentage
 READ_HITS=$(extract_stat "$CACHE_STATS" read_hits)
 READ_MISSES=$(extract_stat "$CACHE_STATS" read_misses)
-READ_HIT_RATIO=$(percent $READ_HITS $READ_MISSES)
+READ_HIT_RATIO=$(percent $READ_HITS $(($READ_MISSES+$READ_HITS)))
 
 WRITE_HITS=$(extract_stat "$CACHE_STATS" write_hits)
 WRITE_MISSES=$(extract_stat "$CACHE_STATS" write_misses)
-WRITE_HIT_RATIO=$(percent $WRITE_HITS $WRITE_MISSES)
+WRITE_HIT_RATIO=$(percent $WRITE_HITS $(($WRITE_MISSES+$WRITE_HITS)))
 
 echo "$CACHE_STATS" | \
     insert_after read_misses read_hit_ratio "$READ_HIT_RATIO" | \
