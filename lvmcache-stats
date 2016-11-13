@@ -37,7 +37,7 @@ function extract_stat()
 
 function percent()
 {
-    awk "BEGIN { printf \"%.2f%\", 100*$1/$2 }"
+    awk "BEGIN { printf \"%.2f%%\", 100*$1/$2 }"
 }
 
 function insert_after()
