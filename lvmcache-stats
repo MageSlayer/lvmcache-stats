@@ -45,7 +45,7 @@ function insert_after()
     awk "// { print } ; /$1/ { print \"\n$2 $3\" }"
 }
 
-CACHE_ID=`echo "$1" | tr / -`
+CACHE_ID=`echo "$1" | sed 's/-/--/' | tr / -`
 CACHE_STATS=$(paste <(echo "$FIELDS") <(dmsetup status | grep "${CACHE_ID}:" | sed -r -e 's/.*: (.*)/\1/' | tr ' ' '\n' | head -n${FIELD_COUNT}))
 
 # calculate cache hit percentage
